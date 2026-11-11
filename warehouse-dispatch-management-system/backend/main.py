@@ -20,16 +20,16 @@ def add_package(package_name, package_destination, package_weight, package_arriv
     if code == 200:
         return response["package"]
     raise HTTPException(code,detail=response["msg"])
-@app.get("/packages")
-def get_package(package_id):
+@app.get("/packages/{package_id}")
+def get_package(package_id: int):
     response = functions.get_a_package(package_id=package_id)
     code = response["code"]
     if code == 200:
         return response["package"]
     raise HTTPException(code, detail=response["msg"])
 
-@app.delete("/package")
-def delete_package(package_id):
+@app.delete("/package/{package_id}")
+def delete_package(package_id: int):
     response = functions.delete_a_package(package_id=package_id)
     code = response["code"]
     if code == 200:

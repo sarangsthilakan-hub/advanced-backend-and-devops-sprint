@@ -23,7 +23,7 @@ class Packages(Base):
     package_destination = Column(String)
     package_weight = Column(Float)
     package_arrival_date = Column(Date)
-    package_status = Column(Integer)
+    package_status = Column(String)
     package_batch_id = Column(Integer,ForeignKey("Dispatches.dispatch_batch_id"), nullable=True)
 
 Base.metadata.create_all(engine)
@@ -34,7 +34,7 @@ def register_a_package(package_name,package_destination,package_weight,package_a
     statuses = ["dispatching","pending_dispatch"]
     status = package_status
     if status is not None:
-        status.lower()
+        status = status.lower()
     if status not in statuses:
         session.close()
         return {"code": 422, "msg": "Invalid Status"}
@@ -83,6 +83,7 @@ def delete_a_package(package_id):
         return {"code": 404, "msg":"Package not Found"}
 
     if package.package_status and package.package_status.lower() == "dispatched":
+        session.close()
         return {"code":422 ,"msg":"Package already dispatched"}
 
     session.delete(package)
@@ -113,7 +114,7 @@ def all_package_filter(package_destination=None,package_status=None,package_arri
             "package_arrival_date": package.package_arrival_date,
             "package_status": package.package_status
         })
-
+        session.close()
     return response
 
 
