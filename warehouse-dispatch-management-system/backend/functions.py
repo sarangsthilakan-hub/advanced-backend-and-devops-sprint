@@ -7,6 +7,15 @@ DB_PATH = "./warehouse.db"
 engine = create_engine(f"sqlite:///{DB_PATH}")
 Base = declarative_base()
 
+
+class Dispatches(Base):
+    __tablename__ = "Dispatches"
+    dispatch_batch_id = Column(Integer,primary_key=True)
+    dispatch_destination = Column(String)
+    dispatch_vehicle = Column(String)
+    dispatch_status = Column(String)
+    dispatch_date = Column(Date, nullable =True)
+
 class Packages(Base):
     __tablename__ = "Packages"
     package_id = Column(Integer, primary_key=True)
@@ -15,15 +24,17 @@ class Packages(Base):
     package_weight = Column(Float)
     package_arrival_date = Column(Date)
     package_status = Column(Integer)
+    package_batch_id = Column(Integer,ForeignKey("Dispatches.dispatch_batch_id"), nullable=True)
 
 Base.metadata.create_all(engine)
 
 
-def register_a_package(package_name,package_destination,package_weight,package_arrival_date,package_status=None):
+def register_a_package(package_name,package_destination,package_weight,package_arrival_date,package_status="dispatching"):
     session = Session(engine)
-    status = package_status.lower()
     statuses = ["dispatching"]
-
+    status = package_status
+    if status is not None:
+        status.lower()
     if status not in statuses:
         session.close()
         return {"code": 422, "msg": "Invalid Status"}
@@ -33,11 +44,11 @@ def register_a_package(package_name,package_destination,package_weight,package_a
                            package_status=package_status)
         session.add(package)
         response = {
-            "package_name": Packages.package_name,
-            "package_destination": Packages.package_destination,
-            "package_weight": Packages.package_weight,
-            "package_arrival_date": Packages.package_arrival_date,
-            "package_status": Packages.package_status
+            "package_name": package.package_name,
+            "package_destination": package.package_destination,
+            "package_weight": package.package_weight,
+            "package_arrival_date": package.package_arrival_date,
+            "package_status": package.package_status
         }
         session.commit()
         session.close()
@@ -45,4 +56,18 @@ def register_a_package(package_name,package_destination,package_weight,package_a
     else:
         session.close()
         return {"code": 422, "msg": "Missing or Empty field"}
+
+def get_a_package(package_id):
+    session = Session(engine)
+    package = session.get(Packages, package_id)
+    response = {
+        "package_id":package.package_id,
+        "package_name": package.package_name,
+        "package_destination": package.package_destination,
+        "package_weight": package.package_weight,
+        "package_arrival_date": package.package_arrival_date,
+        "package_status": package.package_status
+    }
+    session.close()
+    return {"package": response, "code": 200}
 
