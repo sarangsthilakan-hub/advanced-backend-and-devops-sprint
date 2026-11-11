@@ -90,3 +90,32 @@ def delete_a_package(package_id):
     session.close()
     return {"code":200, "package":"Package Deleted Successfully"}
 
+
+def all_package_filter(package_destination=None,package_status=None,package_arrival_date=None):
+    session = Session(engine)
+    packages = session.query(Packages)
+    if package_destination:
+        packages = packages.filter(Packages.package_destination == package_destination)
+    if package_status:
+        packages = packages.filter(Packages.package_status == package_status)
+    if package_arrival_date:
+        packages = packages.filter(Packages.package_arrival_date == package_arrival_date)
+
+    packages = packages.all()
+
+    response = []
+    for package in packages:
+        response.append({
+            "package_id": package.package_id,
+            "package_name": package.package_name,
+            "package_destination": package.package_destination,
+            "package_weight": package.package_weight,
+            "package_arrival_date": package.package_arrival_date,
+            "package_status": package.package_status
+        })
+
+    return response
+
+
+
+

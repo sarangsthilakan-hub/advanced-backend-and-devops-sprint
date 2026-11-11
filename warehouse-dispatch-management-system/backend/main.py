@@ -27,6 +27,7 @@ def get_package(package_id):
     if code == 200:
         return response["package"]
     raise HTTPException(code, detail=response["msg"])
+
 @app.delete("/package")
 def delete_package(package_id):
     response = functions.delete_a_package(package_id=package_id)
@@ -34,3 +35,7 @@ def delete_package(package_id):
     if code == 200:
         return response["package"]
     raise HTTPException(code,detail=response["msg"])
+
+@app.get("/filtered_packages")
+def package_filter(package_destination=None,package_status=None,package_arrival_date=None):
+    return functions.all_package_filter(package_destination=package_destination,package_status=package_status,package_arrival_date=package_arrival_date)
