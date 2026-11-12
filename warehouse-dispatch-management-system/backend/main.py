@@ -110,3 +110,4 @@ def warehouse_analytics(token = Header(None)):
     if not username:
         raise HTTPException(status_code=401, detail="Invalid or expired token.")
     return functions.get_warehouse_analytics()
+
