@@ -39,3 +39,11 @@ def delete_package(package_id: int):
 @app.get("/filtered_packages")
 def package_filter(package_destination=None,package_status=None,package_arrival_date=None):
     return functions.all_package_filter(package_destination=package_destination,package_status=package_status,package_arrival_date=package_arrival_date)
+
+@app.patch("/partial_package_update")
+def package_update(package_id,package_name= None, package_destination=None,package_arrival_date=None,package_status=None,package_batch_id=None):
+    response = functions.delete_a_package(package_id=package_id)
+    code = response["code"]
+    if code == 200:
+        return response["package"]
+    raise HTTPException(code, detail=response["msg"])

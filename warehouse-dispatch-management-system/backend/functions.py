@@ -117,6 +117,43 @@ def all_package_filter(package_destination=None,package_status=None,package_arri
         session.close()
     return response
 
+def partial_package_update(package_id,package_name= None, package_destination=None,package_arrival_date=None,package_status=None,package_batch_id=None):
+    session = Session(engine)
+    package = session.get(Packages,package_id)
+
+    if package is None:
+        session.close()
+        return {"code": 404, "msg":"Package not Found"}
+    if package_name is not None:
+        package.package_name = package_name
+    if package_destination is not None:
+        package.package_destination = package_destination
+    if package_arrival_date is not None:
+        package.package_arrival_date = package_arrival_date
+    if package_status is not None:
+        status = package_status.lower()
+        valid_statuses = ["dispatching", "pending_dispatch", "dispatched"]
+        if status not in valid_statuses:
+            session.close()
+            return {"code": 422, "msg": "Invalid Status"}
+        package.package_status = status
+    if package_batch_id is not None:
+        package.package_batch_id = package_batch_id
+
+    session.commit()
+    response = {
+        "package_id": package.package_id,
+        "package_name": package.package_name,
+        "package_destination": package.package_destination,
+        "package_weight": package.package_weight,
+        "package_arrival_date": package.package_arrival_date,
+        "package_status": package.package_status,
+        "package_batch_id": package.package_batch_id
+    }
+    session.close()
+    return {"code": 200, "package": response}
+
+
 
 
 
