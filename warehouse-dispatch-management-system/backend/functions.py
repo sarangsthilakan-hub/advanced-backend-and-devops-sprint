@@ -1,6 +1,6 @@
 from sqlalchemy import Integer, String,Float, Column, create_engine, DateTime, ForeignKey, func, Date
 from sqlalchemy.orm import Session, declarative_base, session
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 import jwt
 
 DB_PATH = "./warehouse.db"
@@ -11,6 +11,7 @@ USERNAME = "Sarang"
 
 PASSWORD = "Sarang8083"
 ACCESS_TOKEN_EXPIRY = 15
+REFRESH_TOKEN_EXPIRY = 7 * 24 * 60
 SECRET_KEY ="SECRET123"
 ALGORITHM = "HS256"
 
@@ -167,24 +168,33 @@ def partial_package_update(package_id,package_name= None, package_destination=No
 
 def login(username,password):
     if username == USERNAME and password == PASSWORD:
-        token = create_token(username)
-        return token
+        access_token = create_token(username=username,token_type="access")
+        refresh_token = create_token(username=username,token_type="refresh")
+        return {"access_token":access_token,"refresh_token":refresh_token}
     return None
 
-def create_token(username):
+def create_token(username, token_type):
     payload = {
-        "username":username,
-        "exp" : datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRY)
+        "username": username,
+        'token_type': token_type,
+        "exp": datetime.now(timezone.utc) + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRY if token_type == "access" else REFRESH_TOKEN_EXPIRY)  # turnery expression
     }
-    token = jwt.encode(payload=payload,key=SECRET_KEY,algorithm=ALGORITHM)
+    token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=ALGORITHM)
     return token
 
-def verify_token(token):
+
+
+
+
+def verify_token(token,token_type):
     try:
         payload = jwt.decode(jwt=token, key=SECRET_KEY, algorithms=[ALGORITHM])
-        return payload["username"]
     except:
         return False
+    if payload["token_type"] == token_type:
+        return payload["username"]
+    return False
 
 
 # def add_dispatch_batch(package_id,dispatch_destination,dispatch_)
