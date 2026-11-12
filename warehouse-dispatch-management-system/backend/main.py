@@ -104,3 +104,9 @@ def view_dispatch_batches(dispatch_destination=None, dispatch_vehicle=None, disp
         dispatch_status=dispatch_status
     )
 
+@app.get("/warehouse_analytics")
+def warehouse_analytics(token = Header(None)):
+    username = functions.verify_token(token=token, token_type="access")
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+    return functions.get_warehouse_analytics()

@@ -254,3 +254,34 @@ def get_dispatch_batches(dispatch_destination=None, dispatch_vehicle=None, dispa
     return response
 
 
+def get_warehouse_analytics():
+    session = Session(engine)
+    packages = session.query(Packages).all()
+
+    total_packages = len(packages)
+    pending_dispatch = 0
+    dispatched = 0
+    destination_summary = {}
+
+    for package in packages:
+        status = package.package_status
+        if status == "pending_dispatch":
+            pending_dispatch += 1
+        elif status == "dispatched":
+            dispatched += 1
+
+        dest = package.package_destination
+        if dest in destination_summary:
+            destination_summary[dest] += 1
+        else:
+            destination_summary[dest] = 1
+
+    session.close()
+    return {
+        "total_packages_received": total_packages,
+        "total_packages_pending": pending_dispatch,
+        "total_packages_dispatched": dispatched,
+        "destination_wise_count": destination_summary
+    }
+
+
