@@ -42,8 +42,15 @@ def package_filter(package_destination=None,package_status=None,package_arrival_
 
 @app.patch("/partial_package_update")
 def package_update(package_id,package_name= None, package_destination=None,package_arrival_date=None,package_status=None,package_batch_id=None):
-    response = functions.delete_a_package(package_id=package_id)
+    response = functions.partial_package_update(package_id=package_id)
     code = response["code"]
     if code == 200:
         return response["package"]
     raise HTTPException(code, detail=response["msg"])
+
+@app.post("/login")
+def login(username:str,password:str):
+    token = functions.login(username=username,password=password)
+    if token is None:
+        raise HTTPException(status_code=401,detail="Invalid credentials")
+    return {"token": token}

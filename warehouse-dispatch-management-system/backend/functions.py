@@ -1,10 +1,20 @@
 from sqlalchemy import Integer, String,Float, Column, create_engine, DateTime, ForeignKey, func, Date
 from sqlalchemy.orm import Session, declarative_base, session
 from datetime import datetime, date, timedelta
-
+import jwt
 
 DB_PATH = "./warehouse.db"
 engine = create_engine(f"sqlite:///{DB_PATH}")
+
+
+USERNAME = "Sarang"
+
+PASSWORD = "Sarang8083"
+ACCESS_TOKEN_EXPIRY = 15
+SECRET_KEY ="SECRET123"
+ALGORITHM = "HS256"
+
+
 Base = declarative_base()
 
 
@@ -132,7 +142,7 @@ def partial_package_update(package_id,package_name= None, package_destination=No
         package.package_arrival_date = package_arrival_date
     if package_status is not None:
         status = package_status.lower()
-        valid_statuses = ["dispatching", "pending_dispatch", "dispatched"]
+        valid_statuses = ["received", "ready", "dispatched"]
         if status not in valid_statuses:
             session.close()
             return {"code": 422, "msg": "Invalid Status"}
@@ -152,6 +162,32 @@ def partial_package_update(package_id,package_name= None, package_destination=No
     }
     session.close()
     return {"code": 200, "package": response}
+
+
+
+def login(username,password):
+    if username == USERNAME and password == PASSWORD:
+        token = create_token(username)
+        return token
+    return None
+
+def create_token(username):
+    payload = {
+        "username":username,
+        "exp" : datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRY)
+    }
+    token = jwt.encode(payload=payload,key=SECRET_KEY,algorithm=ALGORITHM)
+    return token
+
+def verify_token(token):
+    try:
+        payload = jwt.decode(jwt=token, key=SECRET_KEY, algorithms=[ALGORITHM])
+        return payload["username"]
+    except:
+        return False
+
+
+# def add_dispatch_batch(package_id,dispatch_destination,dispatch_)
 
 
 
