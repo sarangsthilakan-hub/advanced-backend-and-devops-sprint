@@ -71,3 +71,23 @@ def refresh(refresh_token):
         raise HTTPException(status_code=401, detail="Invalid or Expired Token")
     access_token = functions.create_token(username=username,token_type="access")
     return {"access_token":access_token}
+
+
+@app.post("/dispatch_batches")
+def add_dispatch_batch(dispatch_destination, dispatch_vehicle, dispatch_status="dispatching",
+                       dispatch_date: date = None, package_id: int = None, token=Header(None)):
+    username = functions.verify_token(token=token, token_type="access")
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+
+    response = functions.create_dispatch_batch(
+        dispatch_destination=dispatch_destination,
+        dispatch_vehicle=dispatch_vehicle,
+        dispatch_status=dispatch_status,
+        dispatch_date=dispatch_date,
+        package_id=package_id
+    )
+    code = response["code"]
+    if code == 200:
+        return response["batch"]
+    raise HTTPException(code, detail=response["msg"])

@@ -125,7 +125,7 @@ def all_package_filter(package_destination=None,package_status=None,package_arri
             "package_arrival_date": package.package_arrival_date,
             "package_status": package.package_status
         })
-        session.close()
+    session.close()
     return response
 
 def partial_package_update(package_id,package_name= None, package_destination=None,package_arrival_date=None,package_status=None,package_batch_id=None):
@@ -197,8 +197,36 @@ def verify_token(token,token_type):
     return False
 
 
-# def add_dispatch_batch(package_id,dispatch_destination,dispatch_)
+def create_dispatch_batch(dispatch_destination, dispatch_vehicle, dispatch_status="dispatching", dispatch_date=None,
+                          package_id=None):
+    session = Session(engine)
 
+    batch = Dispatches(
+        dispatch_destination=dispatch_destination,
+        dispatch_vehicle=dispatch_vehicle,
+        dispatch_status=dispatch_status,
+        dispatch_date=dispatch_date
+    )
+    session.add(batch)
+    session.commit()
+
+    if package_id is not None:
+        package = session.get(Packages, package_id)
+        if package:
+            package.package_batch_id = batch.dispatch_batch_id
+            package.package_status = "dispatched"
+            session.commit()
+
+    response = {
+        "dispatch_batch_id": batch.dispatch_batch_id,
+        "dispatch_destination": batch.dispatch_destination,
+        "dispatch_vehicle": batch.dispatch_vehicle,
+        "dispatch_status": batch.dispatch_status,
+        "dispatch_date": batch.dispatch_date,
+        "package_id": package_id
+    }
+    session.close()
+    return {"code": 200, "batch": response}
 
 
 
