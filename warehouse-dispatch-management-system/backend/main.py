@@ -91,3 +91,16 @@ def add_dispatch_batch(dispatch_destination, dispatch_vehicle, dispatch_status="
     if code == 200:
         return response["batch"]
     raise HTTPException(code, detail=response["msg"])
+
+
+@app.get("/dispatch_batches")
+def view_dispatch_batches(dispatch_destination=None, dispatch_vehicle=None, dispatch_status=None, token = Header(None)):
+    username = functions.verify_token(token=token, token_type="access")
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+    return functions.get_dispatch_batches(
+        dispatch_destination=dispatch_destination,
+        dispatch_vehicle=dispatch_vehicle,
+        dispatch_status=dispatch_status
+    )
+

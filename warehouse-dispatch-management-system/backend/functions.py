@@ -229,5 +229,28 @@ def create_dispatch_batch(dispatch_destination, dispatch_vehicle, dispatch_statu
     return {"code": 200, "batch": response}
 
 
+def get_dispatch_batches(dispatch_destination=None, dispatch_vehicle=None, dispatch_status=None):
+    session = Session(engine)
+    batches = session.query(Dispatches)
+
+    if dispatch_destination:
+        batches = batches.filter(Dispatches.dispatch_destination == dispatch_destination)
+    if dispatch_vehicle:
+        batches = batches.filter(Dispatches.dispatch_vehicle == dispatch_vehicle)
+    if dispatch_status:
+        batches = batches.filter(Dispatches.dispatch_status == dispatch_status)
+
+    batches = batches.all()
+    response = []
+    for b in batches:
+        response.append({
+            "dispatch_batch_id": b.dispatch_batch_id,
+            "dispatch_destination": b.dispatch_destination,
+            "dispatch_vehicle": b.dispatch_vehicle,
+            "dispatch_status": b.dispatch_status,
+            "dispatch_date": b.dispatch_date
+        })
+    session.close()
+    return response
 
 
