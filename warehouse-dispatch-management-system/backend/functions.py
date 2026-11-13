@@ -2,6 +2,7 @@ from sqlalchemy import Integer, String,Float, Column, create_engine, DateTime, F
 from sqlalchemy.orm import Session, declarative_base, session
 from datetime import datetime, date, timedelta, timezone
 import jwt
+import argon2
 
 DB_PATH = "./warehouse.db"
 engine = create_engine(f"sqlite:///{DB_PATH}")
@@ -36,6 +37,12 @@ class Packages(Base):
     package_arrival_date = Column(Date)
     package_status = Column(String)
     package_batch_id = Column(Integer,ForeignKey("Dispatches.dispatch_batch_id"), nullable=True)
+
+class Users(Base):
+    __tablename__ = "Users"
+    user_id = Column(Integer, primary_key=True)
+    username = Column(String)
+    password = Column(String)
 
 Base.metadata.create_all(engine)
 
