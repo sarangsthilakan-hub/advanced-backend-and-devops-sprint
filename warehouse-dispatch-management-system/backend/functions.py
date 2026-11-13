@@ -190,22 +190,24 @@ def verify_login(username, password):
     except VerifyMismatchError:
         session.close()
         return False
+    if user.user_type:
+        user_type = user.user_type
+    user_type = "user"
     session.close()
-    access_token = create_token(username=username, token_type="access")
-    refresh_token = create_token(username=username, token_type="refresh")
+    access_token = create_token(username=username, token_type="access",user_type=user_type)
+    refresh_token = create_token(username=username, token_type="refresh",user_type=user_type)
     return {"access_token": access_token, "refresh_token": refresh_token}
 
-def create_token(username, token_type):
+def create_token(username, token_type,user_type="user"):
     payload = {
         "username": username,
         'token_type': token_type,
+        'user_type': user_type,
         "exp": datetime.now(timezone.utc) + timedelta(
             minutes=ACCESS_TOKEN_EXPIRY if token_type == "access" else REFRESH_TOKEN_EXPIRY)  # turnery expression
     }
     token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=ALGORITHM)
     return token
-
-
 
 
 
@@ -215,7 +217,7 @@ def verify_token(token,token_type):
     except:
         return False
     if payload["token_type"] == token_type:
-        return payload["username"]
+        return payload
     return False
 
 
@@ -308,13 +310,13 @@ def get_warehouse_analytics():
 
 #--------- Users -----------
 
-def register_user(user_name:str,password:str):
+def register_user(user_name:str,password:str,user_type:str="user"):
     session = Session(engine)
     user_exists = session.query(Users).filter_by(user_name=user_name).first()
     if user_exists is not None:
         session.close()
         return False
-    session.add(Users(user_name=user_name,password=ph.hash(password)))
+    session.add(Users(user_name=user_name,password=ph.hash(password),user_type=user_type))
     session.commit()
     session.close()
     return True

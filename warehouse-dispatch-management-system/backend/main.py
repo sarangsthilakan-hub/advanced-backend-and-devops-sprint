@@ -20,7 +20,7 @@ class Users(BaseModel):
 
 @app.post("/packages")
 def add_package(package_name, package_destination, package_weight, package_arrival_date: date, package_status="pending_dispatch", token = Header(None)): #E3
-    username = functions.verify_token(token=token)
+    username = functions.verify_token(token=token, token_type="access")
     if not username:
         raise HTTPException(status_code=401, detail="Invalid or expired token.")
     response = functions.register_a_package(package_name=package_name,package_destination=package_destination,package_weight=package_weight,package_arrival_date=package_arrival_date,package_status=package_status)
@@ -38,9 +38,11 @@ def get_package(package_id: int):
 
 @app.delete("/package/{package_id}")
 def delete_package(package_id: int,token = Header(None)):
-    username = functions.verify_token(token=token)
-    if not username:
-        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+    payload = functions.verify_token(token=token, token_type="access")
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or Expired Token.")
+    if payload.get("user_type") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required.")
     response = functions.delete_a_package(package_id=package_id)
     code = response["code"]
     if code == 200:
@@ -53,9 +55,11 @@ def package_filter(package_destination=None,package_status=None,package_arrival_
 
 @app.patch("/partial_package_update")
 def package_update(package_id,token = Header(None),package_name= None, package_destination=None,package_arrival_date=None,package_status=None,package_batch_id=None):
-    username = functions.verify_token(token=token, token_type="access")
-    if not username:
-        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+    payload = functions.verify_token(token=token, token_type="access")
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or Expired Token.")
+    if payload.get("user_type") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required.")
     response = functions.partial_package_update(package_id=package_id,package_name=package_name,package_destination=package_destination,package_arrival_date=package_arrival_date,package_status=package_status,package_batch_id=package_batch_id)
     code = response["code"]
     if code == 200:
@@ -71,19 +75,23 @@ def login(username = Body(),password = Body()):
 
 @app.post("/refresh")
 def refresh(refresh_token):
-    username = functions.verify_token(token=refresh_token,token_type="refresh")
-    if not username:
+    payload = functions.verify_token(token=refresh_token,token_type="refresh")
+    if not payload:
         raise HTTPException(status_code=401, detail="Invalid or Expired Token")
-    access_token = functions.create_token(username=username,token_type="access")
+    username= payload.get("username")
+    user_type = payload.get("user_type","user")
+
+    access_token = functions.create_token(username=username,token_type="access",user_type=user_type)
     return {"access_token":access_token}
 
 
 @app.post("/dispatch_batches")
-def add_dispatch_batch(dispatch_destination, dispatch_vehicle, dispatch_status="dispatching",
-                       dispatch_date: date = None, package_id: int = None, token=Header(None)):
-    username = functions.verify_token(token=token, token_type="access")
-    if not username:
-        raise HTTPException(status_code=401, detail="Invalid or expired token.")
+def add_dispatch_batch(dispatch_destination, dispatch_vehicle, dispatch_status="dispatching",dispatch_date: date = None, package_id: int = None, token=Header(None)):
+    payload = functions.verify_token(token=token, token_type="access")
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or Expired Token.")
+    if payload.get("user_type") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required.")
 
     response = functions.create_dispatch_batch(
         dispatch_destination=dispatch_destination,
@@ -119,7 +127,7 @@ def warehouse_analytics(token = Header(None)):
 
 @app.post("/register")
 def register_user(user:Users):
-    if functions.register_user(user_name=user.user_name,password=user.password) is True:
+    if functions.register_user(user_name=user.user_name,password=user.password,user_type=user.user_type) is True:
         return {"message": "user registered successfully"}
     raise HTTPException(status_code=400,detail="Username already exists")
 
