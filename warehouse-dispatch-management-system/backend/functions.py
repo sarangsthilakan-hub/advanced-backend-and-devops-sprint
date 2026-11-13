@@ -2,7 +2,12 @@ from sqlalchemy import Integer, String,Float, Column, create_engine, DateTime, F
 from sqlalchemy.orm import Session, declarative_base, session
 from datetime import datetime, date, timedelta, timezone
 import jwt
-import argon2
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+
+ph = PasswordHasher()
+
 
 DB_PATH = "./warehouse.db"
 engine = create_engine(f"sqlite:///{DB_PATH}")
@@ -41,7 +46,7 @@ class Packages(Base):
 class Users(Base):
     __tablename__ = "Users"
     user_id = Column(Integer, primary_key=True)
-    username = Column(String)
+    user_name = Column(String)
     password = Column(String)
 
 Base.metadata.create_all(engine)
@@ -171,14 +176,21 @@ def partial_package_update(package_id,package_name= None, package_destination=No
     session.close()
     return {"code": 200, "package": response}
 
-
-
-def login(username,password):
-    if username == USERNAME and password == PASSWORD:
-        access_token = create_token(username=username,token_type="access")
-        refresh_token = create_token(username=username,token_type="refresh")
-        return {"access_token":access_token,"refresh_token":refresh_token}
-    return None
+def verify_login(username, password):
+    session = Session(engine)
+    user = session.query(Users).filter_by(user_name = username).first()
+    if user is None:
+        session.close()
+        return False
+    try:
+        ph.verify(user.password,password)
+    except VerifyMismatchError:
+        session.close()
+        return False
+    session.close()
+    access_token = create_token(username=username, token_type="access")
+    refresh_token = create_token(username=username, token_type="refresh")
+    return {"access_token": access_token, "refresh_token": refresh_token}
 
 def create_token(username, token_type):
     payload = {
@@ -290,5 +302,18 @@ def get_warehouse_analytics():
         "total_packages_dispatched": dispatched,
         "destination_wise_count": destination_summary
     }
+
+#--------- Users -----------
+
+def register_user(user_name:str,password:str):
+    session = Session(engine)
+    user_exists = session.query(Users).filter_by(user_name=user_name).first()
+    if user_exists is not None:
+        session.close()
+        return False
+    session.add(Users(user_name=user_name,password=ph.hash(password)))
+    session.commit()
+    session.close()
+    return True
 
 

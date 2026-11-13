@@ -3,7 +3,7 @@ from urllib import response
 
 from fastapi import FastAPI, HTTPException, Body, Header
 from fastapi.middleware.cors import CORSMiddleware
-
+from pydantic import BaseModel
 import functions
 
 app = FastAPI()
@@ -48,7 +48,7 @@ def package_filter(package_destination=None,package_status=None,package_arrival_
 
 @app.patch("/partial_package_update")
 def package_update(package_id,token = Header(None),package_name= None, package_destination=None,package_arrival_date=None,package_status=None,package_batch_id=None):
-    username = functions.verify_token(token=token)
+    username = functions.verify_token(token=token, token_type="access")
     if not username:
         raise HTTPException(status_code=401, detail="Invalid or expired token.")
     response = functions.partial_package_update(package_id=package_id,package_name=package_name,package_destination=package_destination,package_arrival_date=package_arrival_date,package_status=package_status,package_batch_id=package_batch_id)
@@ -58,9 +58,9 @@ def package_update(package_id,token = Header(None),package_name= None, package_d
     raise HTTPException(code, detail=response["msg"])
 
 @app.post("/login")
-def login(username:str,password:str):
-    tokens = functions.login(username=username,password=password)
-    if tokens is None:
+def login(username = Body(),password = Body()):
+    tokens = functions.verify_login(username=username,password=password)
+    if not tokens:
         raise HTTPException(status_code=401,detail="Invalid credentials")
     return tokens
 
@@ -110,4 +110,11 @@ def warehouse_analytics(token = Header(None)):
     if not username:
         raise HTTPException(status_code=401, detail="Invalid or expired token.")
     return functions.get_warehouse_analytics()
+
+
+@app.post("/register")
+def register_user(user_name = Body(), password = Body()):
+    if functions.register_user(user_name=user_name,password=password) is True:
+        return {"message": "user registered successfully"}
+    raise HTTPException(status_code=400,detail="Username already exists")
 
