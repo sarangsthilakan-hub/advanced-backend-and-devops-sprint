@@ -192,7 +192,8 @@ def verify_login(username, password):
         return False
     if user.user_type:
         user_type = user.user_type
-    user_type = "user"
+    else:
+        user_type = "user"
     session.close()
     access_token = create_token(username=username, token_type="access",user_type=user_type)
     refresh_token = create_token(username=username, token_type="refresh",user_type=user_type)
