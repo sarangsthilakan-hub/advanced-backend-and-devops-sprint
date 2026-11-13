@@ -13,6 +13,11 @@ app.add_middleware(CORSMiddleware,
                    allow_methods=["*"],
                    allow_headers=["*"])
 
+class Users(BaseModel):
+    user_name: str
+    password : str
+    user_type: str
+
 @app.post("/packages")
 def add_package(package_name, package_destination, package_weight, package_arrival_date: date, package_status="pending_dispatch", token = Header(None)): #E3
     username = functions.verify_token(token=token)
@@ -113,8 +118,8 @@ def warehouse_analytics(token = Header(None)):
 
 
 @app.post("/register")
-def register_user(user_name = Body(), password = Body()):
-    if functions.register_user(user_name=user_name,password=password) is True:
+def register_user(user:Users):
+    if functions.register_user(user_name=user.user_name,password=user.password) is True:
         return {"message": "user registered successfully"}
     raise HTTPException(status_code=400,detail="Username already exists")
 

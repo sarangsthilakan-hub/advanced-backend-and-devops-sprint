@@ -1,3 +1,5 @@
+from email.policy import default
+
 from sqlalchemy import Integer, String,Float, Column, create_engine, DateTime, ForeignKey, func, Date
 from sqlalchemy.orm import Session, declarative_base, session
 from datetime import datetime, date, timedelta, timezone
@@ -48,6 +50,7 @@ class Users(Base):
     user_id = Column(Integer, primary_key=True)
     user_name = Column(String)
     password = Column(String)
+    user_type = Column(String, default = "user")
 
 Base.metadata.create_all(engine)
 
