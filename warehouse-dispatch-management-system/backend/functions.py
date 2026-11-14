@@ -204,8 +204,7 @@ def create_token(username, token_type,user_type="user"):
         "username": username,
         'token_type': token_type,
         'user_type': user_type,
-        "exp": datetime.now(timezone.utc) + timedelta(
-            minutes=ACCESS_TOKEN_EXPIRY if token_type == "access" else REFRESH_TOKEN_EXPIRY)  # turnery expression
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRY if token_type == "access" else REFRESH_TOKEN_EXPIRY)  # turnery expression
     }
     token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=ALGORITHM)
     return token
