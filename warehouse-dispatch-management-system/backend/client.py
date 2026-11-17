@@ -40,3 +40,7 @@ package_id = 4
 delete_res= requests.delete(url=API_URL+'/package/'+f'{package_id}',headers=header)
 print(delete_res)
 print(delete_res.json())
+
+batch_res= requests.get(url=API_URL+'/dispatch_batches}',headers=header)
+print(batch_res)
+print(batch_res.json())
