@@ -3,6 +3,8 @@ name: CI/CD
 on:
   push:
     branches: [main]
+    paths:
+      - 'warehouse-dispatch-management-system/**'
   workflow_dispatch:
 
 jobs:
@@ -25,8 +27,8 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: dockerfile
+          context: warehouse-dispatch-management-system
+          file: warehouse-dispatch-management-system/backend/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE }}:latest
